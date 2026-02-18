@@ -23,10 +23,8 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
--- [!] ЗАГРУЗКА НОВОЙ ПЛАВАЮЩЕЙ КНОПКИ (ВМЕСТО СТАРОЙ)
-local success, err = pcall(function()
-    local loadstring(game:HttpGet("https://raw.githubusercontent.com/twinkilya0-jpg/Elderwyrm-Button/refs/heads/main/ELDERWYRM%20BUTTON"))()
-    FloatingButton.init(Window)
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/twinkilya0-jpg/Elderwyrm-Button/refs/heads/main/ELDERWYRM%20BUTTON"))()
 end)
 
 if success then
