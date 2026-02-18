@@ -1,7 +1,9 @@
--- UniversalScript (By:Carryxkn2) - DTI FIX + NEW FLOATING BUTTON
+-- UniversalScript (By:Carryxkn2) - CLEAN VERSION
 if not game:IsLoaded() then game.Loaded:Wait() end
 
-local lp = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
 local TS = game:GetService("TeleportService")
 
@@ -20,27 +22,8 @@ local Window = Fluent:CreateWindow({
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+    MinimizeKey = Enum.KeyCode.LeftControl -- Меню открывается/закрывается на Левый Control
 })
-
-pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/twinkilya0-jpg/Elderwyrm-Button/refs/heads/main/ELDERWYRM%20BUTTON"))()
-end)
-
-if success then
-    Fluent:Notify({
-        Title = "Success",
-        Content = "Floating Fly Button Loaded!",
-        Duration = 5
-    })
-else
-    warn("Error loading Fly Button: " .. tostring(err))
-    Fluent:Notify({
-        Title = "Error",
-        Content = "Failed to load Fly Button",
-        Duration = 5
-    })
-end
 
 -- [!] ВКЛАДКИ МЕНЮ
 local Tabs = {
@@ -63,8 +46,8 @@ Tabs.Farm:AddButton({
     Callback = function()
         for _, obj in pairs(workspace:GetDescendants()) do
             if (obj.Name:find("Coin") or obj.Name:find("Token") or obj.Name:find("Money")) and obj:IsA("BasePart") then
-                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                    lp.Character.HumanoidRootPart.CFrame = obj.CFrame
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
                     task.wait(0.15)
                 end
             end
@@ -75,15 +58,15 @@ Tabs.Farm:AddButton({
 --- [!] ВКЛАДКА: ИГРОК
 Tabs.Main:AddInput("WSInput", {Title = "Скорость", Default = "16", Callback = function(v) walkspeed_val = v end})
 Tabs.Main:AddButton({Title = "Применить скорость", Callback = function() 
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
-        lp.Character.Humanoid.WalkSpeed = tonumber(walkspeed_val) or 16
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then 
+        LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(walkspeed_val) or 16
     end 
 end})
 
 Tabs.Main:AddInput("JPInput", {Title = "Прыжок", Default = "50", Callback = function(v) jump_val = v end})
 Tabs.Main:AddButton({Title = "Применить прыжок", Callback = function() 
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
-        lp.Character.Humanoid.JumpPower = tonumber(jump_val) or 50
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then 
+        LocalPlayer.Character.Humanoid.JumpPower = tonumber(jump_val) or 50
     end 
 end})
 
@@ -97,8 +80,8 @@ task.spawn(function()
                 for _, obj in pairs(workspace:GetDescendants()) do
                     if not autofarm_coins then break end
                     if (obj.Name == "Coin" or obj.Name == "Token" or obj.Name == "Money" or obj.Parent.Name == "Coins") and obj:IsA("BasePart") and obj.Transparency < 1 then
-                        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                            lp.Character.HumanoidRootPart.CFrame = obj.CFrame
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
                             found = true
                             task.wait(0.25)
                         end
