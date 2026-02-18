@@ -1,14 +1,8 @@
--- UniversalScript (By:Carryxkn2) - DTI FIX + NEW FLOATING BUTTON
-if not game:IsLoaded() then game.Loaded:Wait() end
-
-local lp = game.Players.LocalPlayer
-local RS = game:GetService("RunService")
-local TS = game:GetService("TeleportService")
-
--- Переменные состояния
-local autofarm_coins = false
-local walkspeed_val = "16"
-local jump_val = "50"
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 -- [!] ЗАГРУЗКА БИБЛИОТЕКИ FLUENT
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
@@ -23,90 +17,225 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
--- [!] ЗАГРУЗКА НОВОЙ ПЛАВАЮЩЕЙ КНОПКИ (ВМЕСТО СТАРОЙ)
-local success, err = pcall(function()
-    local FloatingButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/twinkilya0-jpg/Elderwyrm-Button/refs/heads/main/ELDERWYRM%20BUTTON"))()
-    FloatingButton.init(Window)
+-- === НАСТРОЙКИ ТВОЕЙ КНОПКИ ===
+local SizeBackMulti = 0.1
+local AssetsIcon = "rbxassetid://103822431806952"
+local AssetsBackground = "rbxassetid://95198449172379"
+
+local openshit = Instance.new("ScreenGui")
+openshit.Name = "openshit"
+openshit.Parent = LocalPlayer:WaitForChild("PlayerGui")
+openshit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+openshit.ResetOnSpawn = false
+
+local mainopen = Instance.new("TextButton")
+mainopen.Name = "mainopen"
+mainopen.Parent = openshit
+mainopen.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainopen.BackgroundTransparency = 1
+mainopen.Position = UDim2.new(0.1, 0, 0.1, 0)
+mainopen.Size = UDim2.new(0, 60, 0, 60) -- Сделал круглым
+mainopen.Text = ""
+
+local mainopens = Instance.new("UICorner")
+mainopens.CornerRadius = UDim.new(1, 0)
+mainopens.Parent = mainopen
+
+local backgroundImage = Instance.new("ImageLabel")
+backgroundImage.Name = "RotatingBackground"
+backgroundImage.Parent = mainopen
+backgroundImage.Size = UDim2.new(1.8 + SizeBackMulti, 0, 1.8 + SizeBackMulti, 0)
+backgroundImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+backgroundImage.AnchorPoint = Vector2.new(0.5, 0.5)
+backgroundImage.BackgroundTransparency = 1
+backgroundImage.Image = AssetsBackground
+backgroundImage.SizeConstraint = Enum.SizeConstraint.RelativeXX
+backgroundImage.ZIndex = 0
+
+local frontImage = Instance.new("ImageLabel")
+frontImage.Name = "StaticIcon"
+frontImage.Parent = mainopen
+frontImage.Size = UDim2.new(0.8, 0, 0.8, 0)
+frontImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+frontImage.AnchorPoint = Vector2.new(0.5, 0.5)
+frontImage.BackgroundTransparency = 1
+frontImage.Image = AssetsIcon
+frontImage.ZIndex = 1
+
+local frontCorner = Instance.new("UICorner")
+frontCorner.CornerRadius = UDim.new(1, 0)
+frontCorner.Parent = frontImage
+
+-- === ТВОЯ ЛОГИКА ВРАЩЕНИЯ ===
+local rotation = 0
+local speed = 90 
+local lastTime = tick()
+
+task.spawn(function()
+    while true do
+        local now = tick()
+        local delta = now - lastTime
+        lastTime = now
+        rotation = (rotation + speed * delta) % 360
+        backgroundImage.Rotation = rotation
+        task.wait()
+    end
 end)
 
-if success then
-    Fluent:Notify({
-        Title = "Success",
-        Content = "Floating Fly Button Loaded!",
-        Duration = 5
-    })
-else
-    warn("Error loading Fly Button: " .. tostring(err))
-    Fluent:Notify({
-        Title = "Error",
-        Content = "Failed to load Fly Button",
-        Duration = 5
-    })
+-- === ТВОЯ ФУНКЦИЯ ПЕРЕТАСКИВАНИЯ (С LOCK СИСТЕМОЙ) ===
+local function MakeDraggable(topbarobject, object, locked)
+    local Dragging, DragInput, DragStart, StartPosition
+    local Holding = false
+    local HoldTime = 1.0
+    local MoveCancelThreshold = 6
+    local HoldToken = 0
+
+    object:SetAttribute("Locked", locked or false)
+
+    local function Update(input)
+        if object:GetAttribute("Locked") then return end
+        local delta = input.Position - DragStart
+        object.Position = UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + delta.X,
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + delta.Y
+        )
+    end
+
+    topbarobject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = not object:GetAttribute("Locked")
+            Holding = true
+            DragStart = input.Position
+            StartPosition = object.Position
+            HoldToken += 1
+            local token = HoldToken
+            task.delay(HoldTime, function()
+                if Holding and token == HoldToken then
+                    local newState = not object:GetAttribute("Locked")
+                    object:SetAttribute("Locked", newState)
+                end
+            end)
+        end
+    end)
+
+    topbarobject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            if DragStart and (input.Position - DragStart).Magnitude > MoveCancelThreshold then
+                Holding = false
+            end
+            DragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then Update(input) end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = false
+            Holding = false
+        end
+    end)
 end
 
--- [!] ВКЛАДКИ МЕНЮ
+MakeDraggable(mainopen, mainopen, false)
+
+-- === ЗВУКИ И КЛИК ===
+local function playSound(soundId)
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. soundId
+    sound.Parent = SoundService
+    sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end)
+end
+
+mainopen.MouseButton1Click:Connect(function()
+    local sounds = { "7127123605", "137566474343039", "438666542" }
+    playSound(sounds[math.random(#sounds)])
+    
+    if Window then Window:Minimize() end
+
+    local function smoothSpeed(target, duration)
+        local start = speed
+        local steps = 30
+        for i = 1, steps do
+            speed = start + (target - start) * (i / steps)
+            task.wait(duration / steps)
+        end
+        speed = target
+    end
+    
+    task.spawn(function()
+        smoothSpeed(360, 0.4)
+        task.wait(0.5)
+        smoothSpeed(180, 0.4)
+        task.wait(0.3)
+        smoothSpeed(90, 0.4)
+    end)
+end)
+
+-- === ФУНКЦИИ ЧИТА ===
 local Tabs = {
     Farm = Window:AddTab({ Title = "Автофарм", Icon = "shovels" }),
     Main = Window:AddTab({ Title = "Игрок", Icon = "user" }),
     Settings = Window:AddTab({ Title = "Другое", Icon = "settings" })
 }
 
---- [!] ВКЛАДКА: АВТОФАРМ
+local autofarm_coins = false
+local walkspeed_val = "16"
+local jump_val = "50"
+
 Tabs.Farm:AddToggle("AutofarmTog", {
-    Title = "Включить бесконечный сбор монет", 
+    Title = "Бесконечный сбор монет", 
     Default = false,
-    Callback = function(v)
-        autofarm_coins = v
-    end
+    Callback = function(v) autofarm_coins = v end
 })
 
 Tabs.Farm:AddButton({
-    Title = "Собрать все монеты (Разово)",
+    Title = "Собрать всё (Разово)",
     Callback = function()
         for _, obj in pairs(workspace:GetDescendants()) do
             if (obj.Name:find("Coin") or obj.Name:find("Token") or obj.Name:find("Money")) and obj:IsA("BasePart") then
-                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                    lp.Character.HumanoidRootPart.CFrame = obj.CFrame
-                    task.wait(0.15)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                    task.wait(0.1)
                 end
             end
         end
     end
 })
 
---- [!] ВКЛАДКА: ИГРОК
-Tabs.Main:AddInput("WSInput", {Title = "Скорость", Default = "16", Callback = function(v) walkspeed_val = v end})
+Tabs.Main:AddInput("WS", {Title = "Скорость", Default = "16", Callback = function(v) walkspeed_val = v end})
 Tabs.Main:AddButton({Title = "Применить скорость", Callback = function() 
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
-        lp.Character.Humanoid.WalkSpeed = tonumber(walkspeed_val) or 16
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then 
+        LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(walkspeed_val) or 16
     end 
 end})
 
-Tabs.Main:AddInput("JPInput", {Title = "Прыжок", Default = "50", Callback = function(v) jump_val = v end})
+Tabs.Main:AddInput("JP", {Title = "Прыжок", Default = "50", Callback = function(v) jump_val = v end})
 Tabs.Main:AddButton({Title = "Применить прыжок", Callback = function() 
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
-        lp.Character.Humanoid.JumpPower = tonumber(jump_val) or 50
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then 
+        LocalPlayer.Character.Humanoid.JumpPower = tonumber(jump_val) or 50
     end 
 end})
 
---- [!] ЛОГИКА АВТОФАРМА
 task.spawn(function()
     while true do
         task.wait(0.3)
         if autofarm_coins then
             pcall(function()
-                local found = false
                 for _, obj in pairs(workspace:GetDescendants()) do
                     if not autofarm_coins then break end
-                    if (obj.Name == "Coin" or obj.Name == "Token" or obj.Name == "Money" or obj.Parent.Name == "Coins") and obj:IsA("BasePart") and obj.Transparency < 1 then
-                        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                            lp.Character.HumanoidRootPart.CFrame = obj.CFrame
-                            found = true
-                            task.wait(0.25)
+                    if (obj.Name == "Coin" or obj.Name == "Token" or obj.Name == "Money") and obj:IsA("BasePart") then
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                            task.wait(0.2)
                         end
                     end
                 end
-                if not found then task.wait(1.5) end
             end)
         end
     end
