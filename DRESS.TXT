@@ -25,7 +25,7 @@ local Window = Fluent:CreateWindow({
 
 -- [!] ЗАГРУЗКА НОВОЙ ПЛАВАЮЩЕЙ КНОПКИ (ВМЕСТО СТАРОЙ)
 local success, err = pcall(function()
-    local FloatingButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lapwpkddm/Hacks/refs/heads/main/Online%20Script/FlyBytton.lua",true))()
+    local loadstring(game:HttpGet("https://raw.githubusercontent.com/twinkilya0-jpg/Elderwyrm-Button/refs/heads/main/ELDERWYRM%20BUTTON"))()
     FloatingButton.init(Window)
 end)
 
