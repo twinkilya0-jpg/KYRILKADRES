@@ -1,134 +1,115 @@
--- Floating Button & Loader (By:Carryxkn2)
+-- UniversalScript (By:Carryxkn2) - DTI FIX + NEW FLOATING BUTTON
 if not game:IsLoaded() then game.Loaded:Wait() end
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
+local lp = game.Players.LocalPlayer
+local RS = game:GetService("RunService")
+local TS = game:GetService("TeleportService")
 
--- Ссылка на твой чит
-local ScriptURL = "https://raw.githubusercontent.com/twinkilya0-jpg/KYRILKADRES/refs/heads/main/DRESS.TXT"
+-- Переменные состояния
+local autofarm_coins = false
+local walkspeed_val = "16"
+local jump_val = "50"
 
--- /////////////////////////////////////////////////////////////
--- //               СОЗДАНИЕ КНОПКИ                           //
--- /////////////////////////////////////////////////////////////
+-- [!] ЗАГРУЗКА БИБЛИОТЕКИ FLUENT
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
-local openshit = Instance.new("ScreenGui")
-openshit.Name = "openshit"
-openshit.Parent = LocalPlayer:WaitForChild("PlayerGui")
-openshit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-openshit.ResetOnSpawn = false
+local Window = Fluent:CreateWindow({
+    Title = "Script for Dress To impress",
+    SubTitle = "By:Carryxkn2",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
 
-local mainopen = Instance.new("TextButton")
-mainopen.Name = "mainopen"
-mainopen.Parent = openshit
-mainopen.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainopen.BackgroundTransparency = 1
-mainopen.Position = UDim2.new(0.1, 0, 0.15, 0)
-mainopen.Size = UDim2.new(0, 64, 0, 42)
-mainopen.Text = ""
+-- [!] ЗАГРУЗКА НОВОЙ ПЛАВАЮЩЕЙ КНОПКИ (ВМЕСТО СТАРОЙ)
+local success, err = pcall(function()
+    local FloatingButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lapwpkddm/Hacks/refs/heads/main/Online%20Script/FlyBytton.lua",true))()
+    FloatingButton.init(Window)
+end)
 
-local mainopens = Instance.new("UICorner")
-mainopens.Parent = mainopen
+if success then
+    Fluent:Notify({
+        Title = "Success",
+        Content = "Floating Fly Button Loaded!",
+        Duration = 5
+    })
+else
+    warn("Error loading Fly Button: " .. tostring(err))
+    Fluent:Notify({
+        Title = "Error",
+        Content = "Failed to load Fly Button",
+        Duration = 5
+    })
+end
 
-local AssetsIcon = "rbxassetid://103822431806952"
-local AssetsBackground = "rbxassetid://95198449172379"
+-- [!] ВКЛАДКИ МЕНЮ
+local Tabs = {
+    Farm = Window:AddTab({ Title = "Автофарм", Icon = "shovels" }),
+    Main = Window:AddTab({ Title = "Игрок", Icon = "user" }),
+    Settings = Window:AddTab({ Title = "Другое", Icon = "settings" })
+}
 
-local backgroundImage = Instance.new("ImageLabel")
-backgroundImage.Name = "RotatingBackground"
-backgroundImage.Parent = mainopen
-backgroundImage.Size = UDim2.new(1.9, 0, 1.9, 0)
-backgroundImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-backgroundImage.AnchorPoint = Vector2.new(0.5, 0.5)
-backgroundImage.BackgroundTransparency = 1
-backgroundImage.Image = AssetsBackground
-backgroundImage.SizeConstraint = Enum.SizeConstraint.RelativeXX
-backgroundImage.ZIndex = 0
+--- [!] ВКЛАДКА: АВТОФАРМ
+Tabs.Farm:AddToggle("AutofarmTog", {
+    Title = "Включить бесконечный сбор монет", 
+    Default = false,
+    Callback = function(v)
+        autofarm_coins = v
+    end
+})
 
-local frontImage = Instance.new("ImageLabel")
-frontImage.Name = "StaticIcon"
-frontImage.Parent = mainopen
-frontImage.Size = UDim2.new(0.8, 0, 1, 0)
-frontImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-frontImage.AnchorPoint = Vector2.new(0.5, 0.5)
-frontImage.BackgroundTransparency = 1
-frontImage.Image = AssetsIcon
-frontImage.ZIndex = 1
+Tabs.Farm:AddButton({
+    Title = "Собрать все монеты (Разово)",
+    Callback = function()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if (obj.Name:find("Coin") or obj.Name:find("Token") or obj.Name:find("Money")) and obj:IsA("BasePart") then
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    lp.Character.HumanoidRootPart.CFrame = obj.CFrame
+                    task.wait(0.15)
+                end
+            end
+        end
+    end
+})
 
-local frontCorner = Instance.new("UICorner")
-frontCorner.CornerRadius = UDim.new(1, 0)
-frontCorner.Parent = frontImage
+--- [!] ВКЛАДКА: ИГРОК
+Tabs.Main:AddInput("WSInput", {Title = "Скорость", Default = "16", Callback = function(v) walkspeed_val = v end})
+Tabs.Main:AddButton({Title = "Применить скорость", Callback = function() 
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
+        lp.Character.Humanoid.WalkSpeed = tonumber(walkspeed_val) or 16
+    end 
+end})
 
--- Вращение
-local rotation = 0
-local speed = 90 
-local lastTime = tick()
+Tabs.Main:AddInput("JPInput", {Title = "Прыжок", Default = "50", Callback = function(v) jump_val = v end})
+Tabs.Main:AddButton({Title = "Применить прыжок", Callback = function() 
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then 
+        lp.Character.Humanoid.JumpPower = tonumber(jump_val) or 50
+    end 
+end})
+
+--- [!] ЛОГИКА АВТОФАРМА
 task.spawn(function()
     while true do
-        local now = tick()
-        local delta = now - lastTime
-        lastTime = now
-        rotation = (rotation + speed * delta) % 360
-        backgroundImage.Rotation = rotation
-        task.wait()
-    end
-end)
-
--- Перетаскивание
-local function MakeDraggable(topbarobject, object)
-    local Dragging, DragInput, DragStart, StartPosition
-    topbarobject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            DragStart = input.Position
-            StartPosition = object.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then Dragging = false end
+        task.wait(0.3)
+        if autofarm_coins then
+            pcall(function()
+                local found = false
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if not autofarm_coins then break end
+                    if (obj.Name == "Coin" or obj.Name == "Token" or obj.Name == "Money" or obj.Parent.Name == "Coins") and obj:IsA("BasePart") and obj.Transparency < 1 then
+                        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                            lp.Character.HumanoidRootPart.CFrame = obj.CFrame
+                            found = true
+                            task.wait(0.25)
+                        end
+                    end
+                end
+                if not found then task.wait(1.5) end
             end)
         end
-    end)
-    topbarobject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then DragInput = input end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input == DragInput and Dragging then
-            local delta = input.Position - DragStart
-            object.Position = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + delta.Y)
-        end
-    end)
-end
-MakeDraggable(mainopen, mainopen)
-
--- /////////////////////////////////////////////////////////////
--- //               ЛОГИКА ВЗАИМОДЕЙСТВИЯ                     //
--- /////////////////////////////////////////////////////////////
-
-local scriptExecuted = false
-
-mainopen.MouseButton1Click:Connect(function()
-    -- 1. Эффект ускорения при нажатии
-    task.spawn(function()
-        speed = 400
-        task.wait(0.4)
-        speed = 90
-    end)
-
-    -- 2. Если скрипт еще не был загружен — загружаем его
-    if not scriptExecuted then
-        scriptExecuted = true
-        pcall(function()
-            loadstring(game:HttpGet(ScriptURL))()
-        end)
-        return -- После первой загрузки меню обычно открывается само
-    end
-
-    -- 3. Если скрипт уже работает — управляем его видимостью
-    -- Пытаемся найти окно в глобальной переменной _G.Window
-    if _G.Window then
-        _G.Window:Minimize()
-    else
-        -- Если автор скрипта не вынес Window в _G, попробуем загрузить еще раз
-        pcall(function()
-            loadstring(game:HttpGet(ScriptURL))()
-        end)
     end
 end)
+
+Window:SelectTab(1)
